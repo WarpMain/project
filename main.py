@@ -20,11 +20,12 @@ class Example(QMainWindow):
         self.getImage(START_COORDS, START_SPN)
         self.update_map()
         self.coords = START_COORDS
+        self.spn = START_SPN
 
     def move_Image(self, changing_coords):
         self.coords[0] += changing_coords[0]
         self.coords[1] += changing_coords[1]
-        self.getImage(self.coords, START_SPN)
+        self.getImage(self.coords, self.spn)
         self.image.close()
         self.update_map()
         self.image.show()
@@ -51,15 +52,36 @@ class Example(QMainWindow):
         self.image.resize(630, 470)
         self.image.setPixmap(self.pixmap)
 
-    def keyPressEvent(self, e):
-        if e.key() == Qt.Key_Right:
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Right:
             self.move_Image([START_SPN[0] * 2, 0])
-        if e.key() == Qt.Key_Left:
+        if event.key() == Qt.Key_Left:
             self.move_Image([START_SPN[0] * -2, 0])
-        if e.key() == Qt.Key_Up:
+        if event.key() == Qt.Key_Up:
             self.move_Image([0, START_SPN[1] * 2])
-        if e.key() == Qt.Key_Down:
+        if event.key() == Qt.Key_Down:
             self.move_Image([0, START_SPN[1] * -2])
+
+        if event.key() == Qt.Key_PageUp:
+            self.zoom(True)
+        elif event.key() == Qt.Key_PageDown:
+            self.zoom(False)
+
+    def zoom(self, up):
+        if up:
+            self.spn[0] /= 2
+            self.spn[1] /= 2
+            if self.spn[0] < 0.00046875 and self.spn[1] < 0.00046875:
+                self.spn[0], self.spn[1] = 0.00046875, 0.00046875
+        else:
+            self.spn[0] *= 2
+            self.spn[1] *= 2
+            if self.spn[0] > 30.72 and self.spn[1] > 30.72:
+                self.spn[0], self.spn[1] = 30.72, 30.72
+        self.getImage(self.coords, self.spn)
+        self.image.close()
+        self.update_map()
+        self.image.show()
 
     def closeEvent(self, event):
         """При закрытии формы подчищаем за собой"""

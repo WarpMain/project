@@ -21,11 +21,31 @@ class Example(QMainWindow):
         self.update_map()
         self.coords = START_COORDS
         self.spn = START_SPN
+        self.map_type = 'map'
+
+        self.map_type_map.toggled.connect(self.change_type_map_on_map)
+        self.map_type_sat.toggled.connect(self.change_type_map_on_sat)
+        self.map_type_hybrid.toggled.connect(self.change_type_map_on_hybrid)
+
+    def change_type_map_on_map(self):
+        self.map_type = 'map'
+        self.update_image()
+
+    def change_type_map_on_sat(self):
+        self.map_type = 'sat'
+        self.update_image()
+
+    def change_type_map_on_hybrid(self):
+        self.map_type = 'sat,skl'
+        self.update_image()
 
     def move_Image(self, changing_coords):
         self.coords[0] += changing_coords[0]
         self.coords[1] += changing_coords[1]
-        self.getImage(self.coords, self.spn)
+        self.update_image()
+
+    def update_image(self):   # обновляет отображаемую карту
+        self.getImage(self.coords, self.spn, self.map_type)
         self.image.close()
         self.update_map()
         self.image.show()
@@ -41,7 +61,11 @@ class Example(QMainWindow):
             print("Http статус:", response.status_code, "(", response.reason, ")")
             sys.exit(1)
 
-        self.map_file = "map.png"
+        if style == 'map':
+            self.map_file = "map.png"
+        else:
+            self.map_file = "map.jpg"
+
         with open(self.map_file, "wb") as file:
             file.write(response.content)
 
@@ -51,16 +75,17 @@ class Example(QMainWindow):
         self.image.move(280, 20)
         self.image.resize(630, 470)
         self.image.setPixmap(self.pixmap)
+        # self.image.setText('tcvybunimo')
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Right:
-            self.move_Image([START_SPN[0] * 2, 0])
+            self.move_Image([self.spn[0] * 2, 0])
         if event.key() == Qt.Key_Left:
-            self.move_Image([START_SPN[0] * -2, 0])
+            self.move_Image([self.spn[0] * -2, 0])
         if event.key() == Qt.Key_Up:
-            self.move_Image([0, START_SPN[1] * 2])
+            self.move_Image([0, self.spn[1] * 2])
         if event.key() == Qt.Key_Down:
-            self.move_Image([0, START_SPN[1] * -2])
+            self.move_Image([0, self.spn[1] * -2])
 
         if event.key() == Qt.Key_PageUp:
             self.zoom(True)
@@ -78,7 +103,7 @@ class Example(QMainWindow):
             self.spn[1] *= 2
             if self.spn[0] > 30.72 and self.spn[1] > 30.72:
                 self.spn[0], self.spn[1] = 30.72, 30.72
-        self.getImage(self.coords, self.spn)
+        self.getImage(self.coords, self.spn, self.map_type)
         self.image.close()
         self.update_map()
         self.image.show()

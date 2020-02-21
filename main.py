@@ -22,6 +22,7 @@ class Example(QMainWindow):
         self.coords = START_COORDS
         self.spn = START_SPN
         self.map_type = 'map'
+        self.full_address = ''
 
         self.map_type_map.toggled.connect(self.change_type_map_on_map)
         self.map_type_sat.toggled.connect(self.change_type_map_on_sat)
@@ -83,6 +84,23 @@ class Example(QMainWindow):
         self.image.move(280, 20)
         self.image.resize(630, 470)
         self.image.setPixmap(self.pixmap)
+
+    def change_full_address(self, text):
+        text = text.split(', ')
+        end_text = ['']
+        for t in text:
+            if len(end_text[-1]) + len(t) + 2 <= 33:
+                if text.index(t) != 0:
+                    end_text[-1] += ', ' + t
+                else:
+                    end_text[-1] = t
+            else:
+                end_text[-1] += ','
+                end_text.append(t)
+        text = '\n'.join(end_text)
+
+        self.text_address.setText(text)
+        self.full_address = text
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Right:
@@ -153,6 +171,7 @@ class Example(QMainWindow):
             # Адрес организации.
             org_address = organization["properties"]["CompanyMetaData"]["address"]
 
+            self.change_full_address(org_address)
             # Получаем координаты ответа.
             point = organization["geometry"]["coordinates"]
             org_point = "{0},{1}".format(point[0], point[1])

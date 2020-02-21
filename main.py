@@ -23,21 +23,18 @@ class Example(QMainWindow):
         self.spn = START_SPN
         self.map_type = 'map'
 
-        self.map_type_map.toggled.connect(self.change_type_map_on_map)
-        self.map_type_sat.toggled.connect(self.change_type_map_on_sat)
-        self.map_type_hybrid.toggled.connect(self.change_type_map_on_hybrid)
-
-    def change_type_map_on_map(self):
-        self.map_type = 'map'
+    def change_type_map(self):   # меняет тип карты в зависимости от текущего
+        if self.map_type == 'map':
+            self.map_type = 'sat'
+            type = 'спутник'
+        elif self.map_type == 'sat':
+            self.map_type = 'sat,skl'
+            type = 'гибрид'
+        else:
+            self.map_type = 'map'
+            type = 'схема'
         self.update_image()
-
-    def change_type_map_on_sat(self):
-        self.map_type = 'sat'
-        self.update_image()
-
-    def change_type_map_on_hybrid(self):
-        self.map_type = 'sat,skl'
-        self.update_image()
+        self.text_map_type.setText(f'Тип карты: {type}')
 
     def move_Image(self, changing_coords):
         self.coords[0] += changing_coords[0]
@@ -75,7 +72,6 @@ class Example(QMainWindow):
         self.image.move(280, 20)
         self.image.resize(630, 470)
         self.image.setPixmap(self.pixmap)
-        # self.image.setText('tcvybunimo')
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Right:
@@ -91,6 +87,9 @@ class Example(QMainWindow):
             self.zoom(True)
         elif event.key() == Qt.Key_PageDown:
             self.zoom(False)
+
+        if event.key() == Qt.Key_Tab:
+            self.change_type_map()
 
     def zoom(self, up):
         if up:

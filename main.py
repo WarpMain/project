@@ -23,18 +23,25 @@ class Example(QMainWindow):
         self.spn = START_SPN
         self.map_type = 'map'
 
-    def change_type_map(self):   # меняет тип карты в зависимости от текущего
-        if self.map_type == 'map':
-            self.map_type = 'sat'
-            type = 'спутник'
-        elif self.map_type == 'sat':
-            self.map_type = 'sat,skl'
-            type = 'гибрид'
-        else:
-            self.map_type = 'map'
-            type = 'схема'
+        self.map_type_map.toggled.connect(self.change_type_map_on_map)
+        self.map_type_sat.toggled.connect(self.change_type_map_on_sat)
+        self.map_type_hybrid.toggled.connect(self.change_type_map_on_hybrid)
+
+        self.map_type_map.setFocusPolicy(Qt.NoFocus)
+        self.map_type_sat.setFocusPolicy(Qt.NoFocus)
+        self.map_type_hybrid.setFocusPolicy(Qt.NoFocus)
+
+    def change_type_map_on_map(self):
+        self.map_type = 'map'
         self.update_image()
-        self.text_map_type.setText(f'Тип карты: {type}')
+
+    def change_type_map_on_sat(self):
+        self.map_type = 'sat'
+        self.update_image()
+
+    def change_type_map_on_hybrid(self):
+        self.map_type = 'sat,skl'
+        self.update_image()
 
     def move_Image(self, changing_coords):
         self.coords[0] += changing_coords[0]

@@ -31,6 +31,10 @@ class Example(QMainWindow):
         self.map_type_sat.setFocusPolicy(Qt.NoFocus)
         self.map_type_hybrid.setFocusPolicy(Qt.NoFocus)
 
+        self.SearchButton.clicked.connect(self.search)
+        self.SearchButton.setFocusPolicy(Qt.NoFocus)
+        self.address.setFocusPolicy(Qt.ClickFocus)
+
     def change_type_map_on_map(self):
         self.map_type = 'map'
         self.update_image()
@@ -95,8 +99,8 @@ class Example(QMainWindow):
         elif event.key() == Qt.Key_PageDown:
             self.zoom(False)
 
-        if event.key() == Qt.Key_Tab:
-            self.change_type_map()
+    def mousePressEvent(self, event):   # для сбраса фокуса
+        self.setFocus()
 
     def zoom(self, up):
         if up:
@@ -117,6 +121,68 @@ class Example(QMainWindow):
     def closeEvent(self, event):
         """При закрытии формы подчищаем за собой"""
         os.remove(self.map_file)
+
+    def search(self):
+        if self.address.text() != '':
+            search_api_server = "https://search-maps.yandex.ru/v1/"
+            api_key = "dda3ddba-c9ea-4ead-9010-f43fbc15c6e3"
+
+            address_ll = "37.588392,55.734036"
+
+            search_params = {
+                "apikey": api_key,
+                "text": self.address.text(),
+                "lang": "ru_RU",
+                "ll": address_ll,
+                "type": "biz"
+            }
+
+            response = requests.get(search_api_server, params=search_params)
+            if not response:
+                print("Ошибка выполнения запроса:")
+                print("Http статус:", response.status_code, "(", response.reason, ")")
+                sys.exit(1)
+
+            # Преобразуем ответ в json-объект
+            json_response = response.json()
+
+            # Получаем первую найденную организацию.
+            organization = json_response["features"][0]
+            # Название организации.
+            org_name = organization["properties"]["CompanyMetaData"]["name"]
+            # Адрес организации.
+            org_address = organization["properties"]["CompanyMetaData"]["address"]
+
+            # Получаем координаты ответа.
+            point = organization["geometry"]["coordinates"]
+            org_point = "{0},{1}".format(point[0], point[1])
+            delta = "0.005"
+
+            # Собираем параметры для запроса к StaticMapsAPI:
+            map_params = {
+                # позиционируем карту центром на наш исходный адрес
+                "ll": org_point,
+                "spn": ",".join([delta, delta]),
+                "l": self.map_type,
+                "pt": "{0},pm2dgl".format(org_point)
+            }
+
+            map_api_server = "http://static-maps.yandex.ru/1.x/"
+            response = requests.get(map_api_server, params=map_params)
+
+            self.coords = list(map(float, org_point.split(',')))
+            self.spn = list(map(float, (delta, delta)))
+
+            if self.map_type == 'map':
+                self.map_file = "map.png"
+            else:
+                self.map_file = "map.jpg"
+
+            with open(self.map_file, "wb") as file:
+                file.write(response.content)
+            self.image.close()
+            self.update_map()
+            self.image.show()
 
 
 if __name__ == '__main__':

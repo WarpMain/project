@@ -171,7 +171,6 @@ class Example(QMainWindow):
             # Адрес организации.
             org_address = organization["properties"]["CompanyMetaData"]["address"]
 
-            self.change_full_address(org_address)
             # Получаем координаты ответа.
             point = organization["geometry"]["coordinates"]
             org_point = "{0},{1}".format(point[0], point[1])
@@ -202,6 +201,26 @@ class Example(QMainWindow):
             self.image.close()
             self.update_map()
             self.image.show()
+
+            search_api_server = "https://geocode-maps.yandex.ru/1.x/"
+            api_key = "40d1649f-0493-4b70-98ba-98533de7710b"
+
+            search_params = {
+                "apikey": api_key,
+                "geocode": org_point,
+                "format": 'json'}
+
+            response = requests.get(search_api_server, params=search_params)
+            json_response = response.json()
+            postal_code = json_response['response']['GeoObjectCollection'][
+                'featureMember'][0]['GeoObject']['metaDataProperty'][
+                'GeocoderMetaData']['Address']['postal_code']
+
+            if self.checkBoxIndex.isChecked():
+                text = org_address + '\n' + f'почтовый индекс: {postal_code}'
+            else:
+                text = org_address
+            self.change_full_address(text)
 
 
 if __name__ == '__main__':

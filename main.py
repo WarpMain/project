@@ -29,6 +29,7 @@ class Example(QMainWindow):
         self.map_type_sat.toggled.connect(self.change_type_map_on_sat)
         self.map_type_hybrid.toggled.connect(self.change_type_map_on_hybrid)
 
+
         self.map_type_map.setFocusPolicy(Qt.NoFocus)
         self.map_type_sat.setFocusPolicy(Qt.NoFocus)
         self.map_type_hybrid.setFocusPolicy(Qt.NoFocus)
@@ -36,6 +37,8 @@ class Example(QMainWindow):
         self.SearchButton.clicked.connect(self.search)
         self.SearchButton.setFocusPolicy(Qt.NoFocus)
         self.address.setFocusPolicy(Qt.ClickFocus)
+        self.reset_button.clicked.connect(self.reset)
+        self.reset_button.setFocusPolicy(Qt.NoFocus)
 
     def change_type_map_on_map(self):
         self.map_type = 'map'
@@ -126,6 +129,10 @@ class Example(QMainWindow):
 
     def mousePressEvent(self, event):   # для сбраса фокуса
         self.setFocus()
+
+    def reset(self):
+        self.org_point = ''
+        self.update_image()
 
     def zoom(self, up):
         if up:

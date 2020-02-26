@@ -133,6 +133,7 @@ class Example(QMainWindow):
     def reset(self):
         self.org_point = ''
         self.update_image()
+        self.change_full_address('')
 
     def zoom(self, up):
         if up:

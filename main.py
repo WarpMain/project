@@ -22,6 +22,9 @@ class Example(QMainWindow):
         self.map_type = 'map'
         self.full_address = ''
         self.org_point = ''
+        self.postal_code = ''
+        self.org_address = ''
+
         self.getImage(START_COORDS, START_SPN)
         self.update_map()
 
@@ -33,6 +36,8 @@ class Example(QMainWindow):
         self.map_type_map.setFocusPolicy(Qt.NoFocus)
         self.map_type_sat.setFocusPolicy(Qt.NoFocus)
         self.map_type_hybrid.setFocusPolicy(Qt.NoFocus)
+        self.checkBoxIndex.clicked.connect(self.showing_index)
+        self.checkBoxIndex.setFocusPolicy(Qt.NoFocus)
 
         self.SearchButton.clicked.connect(self.search)
         self.SearchButton.setFocusPolicy(Qt.NoFocus)
@@ -134,6 +139,8 @@ class Example(QMainWindow):
         self.org_point = ''
         self.update_image()
         self.change_full_address('')
+        self.org_address = ''
+        self.postal_code = ''
 
     def zoom(self, up):
         if up:
@@ -154,6 +161,15 @@ class Example(QMainWindow):
     def closeEvent(self, event):
         """При закрытии формы подчищаем за собой"""
         os.remove(self.map_file)
+
+    def showing_index(self):
+        if self.postal_code == '':
+            return
+        if self.checkBoxIndex.isChecked():
+            text = self.org_address + '\n' + f'почтовый индекс: {self.postal_code}'
+        else:
+            text = self.org_address
+        self.change_full_address(text)
 
     def search(self):
         if self.address.text() != '':
@@ -184,7 +200,7 @@ class Example(QMainWindow):
             # Название организации.
             org_name = organization["properties"]["CompanyMetaData"]["name"]
             # Адрес организации.
-            org_address = organization["properties"]["CompanyMetaData"]["address"]
+            self.org_address = organization["properties"]["CompanyMetaData"]["address"]
 
             # Получаем координаты ответа.
             point = organization["geometry"]["coordinates"]
@@ -203,14 +219,14 @@ class Example(QMainWindow):
 
             response = requests.get(search_api_server, params=search_params)
             json_response = response.json()
-            postal_code = json_response['response']['GeoObjectCollection'][
+            self.postal_code = json_response['response']['GeoObjectCollection'][
                 'featureMember'][0]['GeoObject']['metaDataProperty'][
                 'GeocoderMetaData']['Address']['postal_code']
 
             if self.checkBoxIndex.isChecked():
-                text = org_address + '\n' + f'почтовый индекс: {postal_code}'
+                text = self.org_address + '\n' + f'почтовый индекс: {self.postal_code}'
             else:
-                text = org_address
+                text = self.org_address
             self.change_full_address(text)
 
 

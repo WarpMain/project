@@ -17,12 +17,13 @@ class Example(QMainWindow):
     def __init__(self):
         super().__init__()
         uic.loadUi('main_menu.ui', self)
-        self.getImage(START_COORDS, START_SPN)
-        self.update_map()
         self.coords = START_COORDS
         self.spn = START_SPN
         self.map_type = 'map'
         self.full_address = ''
+        self.org_point = ''
+        self.getImage(START_COORDS, START_SPN)
+        self.update_map()
 
         self.map_type_map.toggled.connect(self.change_type_map_on_map)
         self.map_type_sat.toggled.connect(self.change_type_map_on_sat)
@@ -60,9 +61,15 @@ class Example(QMainWindow):
         self.image.show()
 
     def getImage(self, coords, spn, style="map"):
-        params = {"ll": ",".join(map(str, coords)),
-                  "l": style,
-                  "spn": ",".join(map(str, spn))}
+        if self.org_point != '':
+            params = {"ll": ",".join(map(str, coords)),
+                      "l": style,
+                      "spn": ",".join(map(str, spn)),
+                      "pt": "{0},pm2dgl".format(self.org_point)}
+        else:
+            params = {"ll": ",".join(map(str, coords)),
+                      "l": style,
+                      "spn": ",".join(map(str, spn))}
         response = requests.get(API_SERVER, params=params)
 
         if not response:
@@ -173,41 +180,17 @@ class Example(QMainWindow):
 
             # Получаем координаты ответа.
             point = organization["geometry"]["coordinates"]
-            org_point = "{0},{1}".format(point[0], point[1])
-            delta = "0.005"
-
-            # Собираем параметры для запроса к StaticMapsAPI:
-            map_params = {
-                # позиционируем карту центром на наш исходный адрес
-                "ll": org_point,
-                "spn": ",".join([delta, delta]),
-                "l": self.map_type,
-                "pt": "{0},pm2dgl".format(org_point)
-            }
-
-            map_api_server = "http://static-maps.yandex.ru/1.x/"
-            response = requests.get(map_api_server, params=map_params)
-
-            self.coords = list(map(float, org_point.split(',')))
-            self.spn = list(map(float, (delta, delta)))
-
-            if self.map_type == 'map':
-                self.map_file = "map.png"
-            else:
-                self.map_file = "map.jpg"
-
-            with open(self.map_file, "wb") as file:
-                file.write(response.content)
-            self.image.close()
-            self.update_map()
-            self.image.show()
+            self.org_point = "{0},{1}".format(point[0], point[1])
+            self.spn = [0.005, 0.005]
+            self.coords = list(map(float, self.org_point.split(',')))
+            self.update_image()
 
             search_api_server = "https://geocode-maps.yandex.ru/1.x/"
             api_key = "40d1649f-0493-4b70-98ba-98533de7710b"
 
             search_params = {
                 "apikey": api_key,
-                "geocode": org_point,
+                "geocode": self.org_point,
                 "format": 'json'}
 
             response = requests.get(search_api_server, params=search_params)
